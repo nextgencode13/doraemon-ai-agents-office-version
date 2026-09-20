@@ -1,0 +1,16 @@
+{
+  "name": "next-gen-jarvis-ai",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --prefix apps/web run dev",
+    "build:web": "npm --prefix apps/web run build",
+    "lint:web": "npm --prefix apps/web run lint",
+    "test:api": ".\\services\\api\\.venv\\Scripts\\pytest services/api/tests",
+    "dev:api": ".\\services\\api\\.venv\\Scripts\\uvicorn app.main:app --app-dir services/api --reload --port 8000"
+  },
+  "devDependencies": {}
+}
