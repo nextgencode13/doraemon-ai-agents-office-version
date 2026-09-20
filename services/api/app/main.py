@@ -4,10 +4,21 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+import app.models.conversation  # noqa: F401
+import app.models.memory  # noqa: F401
+import app.models.productivity  # noqa: F401
+import app.models.task  # noqa: F401
+from app.api.v1.chat import router as chat_router
 from app.api.v1.health import router as health_router
+from app.api.v1.memory import router as memory_router
+from app.api.v1.productivity import router as productivity_router
+from app.api.v1.tasks import router as tasks_router
 from app.core.config import settings
 from app.core.logging import RequestLoggingMiddleware, logger, setup_logging
 from app.db.session import Base, engine
+from app.tools.memory_tools import register_memory_tools
+from app.tools.productivity_tools import register_productivity_tools
+from app.tools.task_tools import register_task_tools
 
 
 @asynccontextmanager
@@ -15,14 +26,19 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logging()
     logger.info(f"Starting {settings.APP_NAME} in {settings.APP_ENV} mode")
-    
+
+    # Register tool ecosystem
+    register_task_tools()
+    register_memory_tools()
+    register_productivity_tools()
+
     # Initialize SQLite tables if using local SQLite fallback
     if settings.DATABASE_URL.startswith("sqlite"):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-            
+
     yield
-    
+
     # Shutdown
     logger.info(f"Shutting down {settings.APP_NAME}")
     await engine.dispose()
@@ -32,7 +48,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
         version="0.1.0",
-        description="JARVIS Personal AI Operating System - Backend API",
+        description="Doraemon AI Agents Office Version - Backend API",
         lifespan=lifespan,
     )
 
@@ -62,9 +78,11 @@ def create_app() -> FastAPI:
         )
 
     # Mount API v1 Routers
-    from app.api.v1.chat import router as chat_router
     app.include_router(health_router, prefix="/api/v1")
     app.include_router(chat_router, prefix="/api/v1")
+    app.include_router(tasks_router, prefix="/api/v1")
+    app.include_router(memory_router, prefix="/api/v1")
+    app.include_router(productivity_router, prefix="/api/v1")
 
     return app
 

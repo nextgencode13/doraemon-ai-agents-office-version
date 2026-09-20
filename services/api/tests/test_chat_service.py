@@ -23,12 +23,12 @@ class MockChatProvider(AIProvider):
     async def generate(self, request: AIRequest) -> AIResponse:
         last_msg = request.messages[-1].content
         return AIResponse(
-            content=f"JARVIS Response to: {last_msg}",
+            content=f"Doraemon Response to: {last_msg}",
             usage=AIUsage(prompt_tokens=10, completion_tokens=15, total_tokens=25),
         )
 
     async def stream(self, request: AIRequest) -> AsyncIterator[AIStreamChunk]:
-        yield AIStreamChunk(delta="JARVIS ")
+        yield AIStreamChunk(delta="Doraemon ")
         yield AIStreamChunk(delta="Streaming ")
         yield AIStreamChunk(delta=f"Response: {request.messages[-1].content}")
         yield AIStreamChunk(delta="", is_final=True)
@@ -65,7 +65,7 @@ async def test_chat_sync_flow():
         data = response.json()
         assert "conversation_id" in data
         assert data["user_message"]["content"] == "What is my next task?"
-        assert data["assistant_message"]["content"] == "JARVIS Response to: What is my next task?"
+        assert data["assistant_message"]["content"] == "Doraemon Response to: What is my next task?"
 
         conv_id = data["conversation_id"]
 
@@ -95,5 +95,5 @@ async def test_chat_stream_flow():
         content = response.text
         assert "event: conversation" in content
         assert "event: token" in content
-        assert "JARVIS " in content
+        assert "Doraemon " in content
         assert "event: done" in content

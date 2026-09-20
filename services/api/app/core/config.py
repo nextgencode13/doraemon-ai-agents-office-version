@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     )
 
     # General
-    APP_NAME: str = "JARVIS AI OS"
+    APP_NAME: str = "Doraemon AI Agents Office Version"
     APP_ENV: Literal["development", "testing", "production"] = "development"
     API_VERSION: str = "v1"
     HOST: str = "0.0.0.0"

@@ -13,7 +13,7 @@ async def test_health_endpoint():
         assert response.status_code == 200
         data = response.json()
         assert data["status"] in ["ok", "degraded"]
-        assert data["app_name"] == "JARVIS AI OS"
+        assert data["app_name"] == "Doraemon AI Agents Office Version"
         assert data["api_version"] == "v1"
         assert "ai_provider" in data
         assert "ai_configured" in data

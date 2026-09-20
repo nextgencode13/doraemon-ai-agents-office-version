@@ -60,3 +60,8 @@ data/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Agent files (local only, never track/commit)
+AGENTS.md
+CLAUDE.md
+anubhav-work/

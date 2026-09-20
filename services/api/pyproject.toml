@@ -1,7 +1,7 @@
 [project]
-name = "jarvis-api"
+name = "doraemon-ai-agents-office-version-api"
 version = "0.1.0"
-description = "FastAPI backend for JARVIS Personal AI Operating System"
+description = "FastAPI backend for Doraemon AI Agents Office Version"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.base import AIMessage, AIRole
 from app.ai.service import ai_service
 from app.db.session import get_db
+from app.memory.service import MemoryService
 from app.repositories.conversation_repository import ConversationRepository
 from app.schemas.chat import (
     ChatRequest,
@@ -68,6 +69,7 @@ async def chat_sync(
 ):
     """Synchronous chat endpoint that persists conversation history and returns full response."""
     repo = ConversationRepository(db)
+    memory_service = MemoryService(db)
 
     # 1. Get or create conversation
     if payload.conversation_id:
@@ -88,7 +90,10 @@ async def chat_sync(
         content=payload.message,
     )
 
-    # 3. Build message history for AI
+    # 3. Retrieve relevant memory context
+    memory_context = await memory_service.get_relevant_context(payload.message)
+
+    # 4. Build message history for AI
     db_messages = await repo.get_messages(conversation.id)
     ai_messages = [
         AIMessage(
@@ -98,10 +103,18 @@ async def chat_sync(
         for m in db_messages
     ]
 
-    # 4. Generate AI response
+    # 5. Generate AI response
     try:
+        system_instruction = None
+        if memory_context:
+            system_instruction = (
+                "You are DORAEMON, an intelligent AI office assistant and operating system.\n"
+                f"{memory_context}"
+            )
+
         ai_resp = await ai_service.generate_response(
             messages=ai_messages,
+            system_instruction=system_instruction,
             temperature=payload.temperature or 0.7,
         )
     except Exception as exc:
@@ -110,7 +123,7 @@ async def chat_sync(
             detail=f"AI Provider error: {exc}",
         ) from exc
 
-    # 5. Persist assistant message
+    # 6. Persist assistant message
     meta_info = {}
     if ai_resp.usage:
         meta_info["usage"] = ai_resp.usage.model_dump()
@@ -136,6 +149,7 @@ async def chat_stream(
 ):
     """Server-Sent Events (SSE) streaming chat endpoint."""
     repo = ConversationRepository(db)
+    memory_service = MemoryService(db)
 
     # 1. Get or create conversation
     if payload.conversation_id:
@@ -156,7 +170,10 @@ async def chat_stream(
         content=payload.message,
     )
 
-    # 3. Retrieve history
+    # 3. Retrieve relevant memory context
+    memory_context = await memory_service.get_relevant_context(payload.message)
+
+    # 4. Retrieve history
     db_messages = await repo.get_messages(conversation.id)
     ai_messages = [
         AIMessage(
@@ -172,8 +189,16 @@ async def chat_stream(
 
         accumulated_text = []
         try:
+            system_instruction = None
+            if memory_context:
+                system_instruction = (
+                    "You are DORAEMON, an intelligent AI office assistant and operating system.\n"
+                    f"{memory_context}"
+                )
+
             async for chunk in ai_service.stream_response(
                 messages=ai_messages,
+                system_instruction=system_instruction,
                 temperature=payload.temperature or 0.7,
             ):
                 if chunk.delta:
